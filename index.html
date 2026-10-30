@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4C Neon Catcher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a2a, #1a1a3a);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 200, 255, 0.3);
+        }
+
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #0a0a2a, #1a1a3a);
+        }
+
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 10;
+            background: rgba(10, 10, 42, 0.7);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(0, 200, 255, 0.2);
+        }
+
+        .hud-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hud-label {
+            font-size: 12px;
+            color: #00ccff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px #00ccff;
+        }
+
+        .hud-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(10, 10, 42, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 20;
+            transition: opacity 0.5s ease;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 42px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            background: linear-gradient(90deg, #00ccff, #cc00ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(0, 200, 255, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #00ccff;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 0 0 10px #00ccff;
+        }
+
+        .instructions {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 80%;
+            border: 1px solid rgba(0, 200, 255, 0.3);
+        }
+
+        .instructions p {
+            margin: 10px 0;
+            color: #a0a0ff;
+        }
+
+        .btn {
+            background: linear-gradient(90deg, #00ccff, #cc00ff);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 200, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 20px rgba(0, 200, 255, 0.8);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #game-over .title,
+        #victory .title {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .final-score {
+            font-size: 24px;
+            margin: 20px 0;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+        }
+
+        .record {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #ffcc00;
+            text-shadow: 0 0 10px #ffcc00;
+        }
+
+        .neon-border {
+            border: 2px solid #00ccff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #00ccff, inset 0 0 10px rgba(0, 200, 255, 0.2);
+        }
+
+        .university-mention {
+            font-size: 14px;
+            color: #a0a0ff;
+            margin-top: 30px;
+            text-align: center;
+            max-width: 90%;
+            line-height: 1.5;
+            font-style: italic;
+            border-top: 1px solid rgba(0, 200, 255, 0.3);
+            padding-top: 15px;
+        }
+
+        .activity-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+            max-width: 80%;
+        }
+
+        .activity-item {
+            background: rgba(0, 200, 255, 0.1);
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 14px;
+            border: 1px solid rgba(0, 200, 255, 0.3);
+        }
+
+        .download-btn {
+            background: linear-gradient(90deg, #ff00cc, #cc00ff);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(255, 0, 204, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(255, 0, 204, 0.9);
+        }
+
+        .victory-message {
+            font-size: 20px;
+            margin: 15px 0;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container" class="neon-border">
+        <canvas id="game-canvas"></canvas>
+        
+        <div id="hud">
+            <div class="hud-item">
+                <div class="hud-label">Attrapées</div>
+                <div id="caught-value" class="hud-value">0/10</div>
+            </div>
+            <div class="hud-item">
+                <div class="hud-label">Ratées</div>
+                <div id="missed-value" class="hud-value">0/5</div>
+            </div>
+        </div>
+        
+        <div id="start-screen" class="overlay">
+            <h1 class="title">4C Neon Catcher</h1>
+            <p class="subtitle">Attrapez les activités du centre 4C</p>
+            <div class="instructions">
+                <p>Utilisez les touches ← → ou A D pour déplacer le manager</p>
+                <p>Attrapez 10 activités pour gagner</p>
+                <p>5 activités ratées = Game Over</p>
+            </div>
+            
+            <div class="activity-list">
+                <div class="activity-item">Workshop</div>
+                <div class="activity-item">Formation</div>
+                <div class="activity-item">Bootcamp</div>
+                <div class="activity-item">Coaching</div>
+                <div class="activity-item">Soft Skills</div>
+                <div class="activity-item">Hackathon</div>
+                <div class="activity-item">Conférence</div>
+                <div class="activity-item">Projet collaboratif</div>
+                <div class="activity-item">Atelier créativité</div>
+                <div class="activity-item">Simulation / Role play</div>
+            </div>
+            
+            <button id="start-btn" class="btn">Commencer</button>
+            
+            <div class="university-mention">
+                Jeu développé dans le cadre de nos activités 4C à l'Université de Tunis
+            </div>
+        </div>
+        
+        <div id="game-over" class="overlay hidden">
+            <h1 class="title">Game Over</h1>
+            <p class="subtitle">Trop d'activités ratées !</p>
+            <div class="final-score">Activités attrapées: <span id="final-caught">0</span>/10</div>
+            <button id="restart-btn" class="btn">Rejouer</button>
+        </div>
+        
+        <div id="victory" class="overlay hidden">
+            <h1 class="title">Victoire !</h1>
+            <p class="subtitle">Félicitations !</p>
+            <div class="victory-message">Vous avez débloqué un guide exclusif</div>
+            
+            <a href="https://drive.google.com/file/d/1NaEuHMqGdcOmoBQOTwFnPIgNP1xQUFby/view?usp=sharing" target="_blank" id="download-link" class="download-btn">
+                Télécharger mon guide gratuit de Personal Branding augmenté par l'IA
+            </a>
+            
+            <button id="victory-restart-btn" class="btn">Rejouer</button>
+            
+            <div class="university-mention">
+                Jeu développé dans le cadre de nos activités 4C à l'Université de Tunis
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Éléments du DOM
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over');
+        const victoryScreen = document.getElementById('victory');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const victoryRestartBtn = document.getElementById('victory-restart-btn');
+        const caughtValue = document.getElementById('caught-value');
+        const missedValue = document.getElementById('missed-value');
+        const finalCaught = document.getElementById('final-caught');
+        const downloadLink = document.getElementById('download-link');
+
+        // Configuration du canvas
+        canvas.width = 400;
+        canvas.height = 600;
+
+        // Variables du jeu
+        let gameActive = false;
+        let caught = 0;
+        let missed = 0;
+        let player;
+        let activities = [];
+        let particles = [];
+        let lastActivityTime = 0;
+        let activityInterval = 1500; // ms entre chaque activité
+        let activitySpeed = 2;
+        let keys = {};
+
+        // Liste des activités 4C
+        const activityTypes = [
+            "Workshop", "Formation", "Bootcamp", "Coaching", "Soft Skills",
+            "Hackathon", "Conférence", "Projet collaboratif", "Atelier créativité", "Simulation / Role play"
+        ];
+
+        // Classe du joueur
+        class Player {
+            constructor() {
+                this.width = 60;
+                this.height = 80;
+                this.x = canvas.width / 2 - this.width / 2;
+                this.y = canvas.height - this.height - 20;
+                this.speed = 6;
+                this.color = '#00ccff';
+            }
+
+            draw() {
+                // Corps du manager
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                
+                // Tête
+                ctx.beginPath();
+                ctx.arc(this.x + this.width/2, this.y + 20, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Corps (forme de cravate stylisée)
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width/2, this.y + 35);
+                ctx.lineTo(this.x + 10, this.y + this.height - 10);
+                ctx.lineTo(this.x + this.width - 10, this.y + this.height - 10);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+            }
+
+            update() {
+                // Déplacement gauche
+                if ((keys['ArrowLeft'] || keys['a'] || keys['A']) && this.x > 0) {
+                    this.x -= this.speed;
+                }
+                
+                // Déplacement droite
+                if ((keys['ArrowRight'] || keys['d'] || keys['D']) && this.x < canvas.width - this.width) {
+                    this.x += this.speed;
+                }
+            }
+        }
+
+        // Classe des activités
+        class Activity {
+            constructor() {
+                this.type = activityTypes[Math.floor(Math.random() * activityTypes.length)];
+                this.size = 20 + Math.random() * 10;
+                this.x = Math.random() * (canvas.width - this.size * 3);
+                this.y = -this.size;
+                this.speed = activitySpeed + Math.random() * 1;
+                this.color = this.getRandomNeonColor();
+                this.oscillation = Math.random() * 2;
+                this.oscillationSpeed = 0.05 + Math.random() * 0.05;
+                this.oscillationOffset = Math.random() * Math.PI * 2;
+                this.brightness = 1;
+                this.brightnessDirection = 0.01;
+            }
+
+            getRandomNeonColor() {
+                const colors = ['#00ccff', '#cc00ff', '#00ffcc', '#ff00cc', '#ffff00'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            draw() {
+                ctx.font = `bold ${this.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Effet de brillance variable
+                this.brightness += this.brightnessDirection;
+                if (this.brightness >= 1.2 || this.brightness <= 0.8) {
+                    this.brightnessDirection *= -1;
+                }
+                
+                // Effet de brillance
+                ctx.shadowBlur = 15 * this.brightness;
+                ctx.shadowColor = this.color;
+                ctx.fillStyle = this.color;
+                
+                // Légère oscillation
+                const oscillationX = Math.sin(Date.now() * this.oscillationSpeed + this.oscillationOffset) * this.oscillation;
+                
+                ctx.fillText(this.type, this.x + this.size/2 + oscillationX, this.y + this.size/2);
+                ctx.shadowBlur = 0;
+            }
+
+            update() {
+                this.y += this.speed;
+            }
+
+            isOffScreen() {
+                return this.y > canvas.height;
+            }
+
+            collidesWith(player) {
+                return (
+                    this.x < player.x + player.width &&
+                    this.x + this.size * 3 > player.x &&
+                    this.y < player.y + player.height &&
+                    this.y + this.size > player.y
+                );
+            }
+        }
+
+        // Classe des particules de collecte
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 5 + 2;
+                this.speedX = Math.random() * 6 - 3;
+                this.speedY = Math.random() * 6 - 3;
+                this.color = color;
+                this.life = 1; // Vie de la particule (1 à 0)
+            }
+
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.globalAlpha = 1;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= 0.02; // Réduit la vie progressivement
+                
+                return this.life > 0; // Retourne true si la particule est encore vivante
+            }
+        }
+
+        // Initialisation du jeu
+        function init() {
+            player = new Player();
+            activities = [];
+            particles = [];
+            caught = 0;
+            missed = 0;
+            activitySpeed = 2;
+            activityInterval = 1500;
+            lastActivityTime = 0;
+            caughtValue.textContent = '0/10';
+            missedValue.textContent = '0/5';
+        }
+
+        // Création d'un effet de collecte
+        function createCollectionEffect(x, y, color) {
+            for (let i = 0; i < 15; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        // Gestion des collisions
+        function checkCollisions() {
+            for (let i = activities.length - 1; i >= 0; i--) {
+                if (activities[i].collidesWith(player)) {
+                    // Créer un effet de collecte
+                    createCollectionEffect(
+                        activities[i].x + activities[i].size/2,
+                        activities[i].y + activities[i].size/2,
+                        activities[i].color
+                    );
+                    
+                    // Supprimer l'activité et augmenter le compteur
+                    activities.splice(i, 1);
+                    caught++;
+                    caughtValue.textContent = `${caught}/10`;
+                    
+                    // Vérifier la victoire
+                    if (caught >= 10) {
+                        victory();
+                    }
+                    
+                    break;
+                }
+            }
+        }
+
+        // Vérifier les activités manquées
+        function checkMissedActivities() {
+            for (let i = activities.length - 1; i >= 0; i--) {
+                if (activities[i].isOffScreen()) {
+                    // Supprimer l'activité et augmenter le compteur d'erreurs
+                    activities.splice(i, 1);
+                    missed++;
+                    missedValue.textContent = `${missed}/5`;
+                    
+                    // Vérifier la défaite
+                    if (missed >= 5) {
+                        gameOver();
+                    }
+                    
+                    break;
+                }
+            }
+        }
+
+        // Fin de partie (défaite)
+        function gameOver() {
+            gameActive = false;
+            finalCaught.textContent = caught;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        // Victoire
+        function victory() {
+            gameActive = false;
+            victoryScreen.classList.remove('hidden');
+        }
+
+        // Boucle de jeu
+        function gameLoop() {
+            if (!gameActive) return;
+            
+            // Effacer le canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Dessiner un fond avec un léger dégradé
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#0a0a2a');
+            gradient.addColorStop(1, '#1a1a3a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Mettre à jour et dessiner le joueur
+            player.update();
+            player.draw();
+            
+            // Générer de nouvelles activités
+            const currentTime = Date.now();
+            if (currentTime - lastActivityTime > activityInterval) {
+                activities.push(new Activity());
+                lastActivityTime = currentTime;
+                
+                // Augmenter progressivement la difficulté
+                if (activityInterval > 800) {
+                    activityInterval -= 10;
+                }
+                if (activitySpeed < 6) {
+                    activitySpeed += 0.01;
+                }
+            }
+            
+            // Mettre à jour et dessiner les activités
+            for (let i = 0; i < activities.length; i++) {
+                activities[i].update();
+                activities[i].draw();
+            }
+            
+            // Mettre à jour et dessiner les particules
+            for (let i = particles.length - 1; i >= 0; i--) {
+                if (!particles[i].update()) {
+                    particles.splice(i, 1);
+                } else {
+                    particles[i].draw();
+                }
+            }
+            
+            // Vérifier les collisions
+            checkCollisions();
+            
+            // Vérifier les activités manquées
+            checkMissedActivities();
+            
+            // Continuer la boucle de jeu
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Gestion des événements clavier
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Démarrer le jeu
+        startBtn.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            victoryScreen.classList.add('hidden');
+            init();
+            gameActive = true;
+            gameLoop();
+        });
+
+        // Redémarrer le jeu
+        restartBtn.addEventListener('click', () => {
+            gameOverScreen.classList.add('hidden');
+            init();
+            gameActive = true;
+            gameLoop();
+        });
+
+        // Redémarrer après victoire
+        victoryRestartBtn.addEventListener('click', () => {
+            victoryScreen.classList.add('hidden');
+            init();
+            gameActive = true;
+            gameLoop();
+        });
+    </script>
+</body>
+</html>
